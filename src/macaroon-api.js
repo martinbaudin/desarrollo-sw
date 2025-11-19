@@ -6,7 +6,6 @@ const {
   MacaroonsVerifier,
 } = require("macaroons.js");
 const { amigos } = require("./data");
-const { VID_NONCE_KEY_SZ } = require("macaroons.js/lib/MacaroonsConstants");
 
 const app = express();
 
@@ -95,7 +94,6 @@ function authenticateMacaroon(req, res, next) {
 
     const verifier = new MacaroonsVerifier(m);
     const nowSeconds = Math.floor(Date.now() / 1000);
-    const requestedPath = req.path;
 
     verifier.satisfyGeneral((caveat) => {
       if (typeof caveat !== "string") return false;
@@ -104,11 +102,6 @@ function authenticateMacaroon(req, res, next) {
         const role = caveat.split("=")[1].trim();
         return role === "admin";
       }
-
-      // if (caveat.startsWith("path =")) {
-      //   const path = caveat.split("=")[1].trim();
-      //   return path === requestedPath;
-      // }
 
       if (caveat.startsWith("method =")) {
         const method = caveat.split("=")[1].trim();
