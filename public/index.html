@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JWT vs Macaroons - Demo Interactiva</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      text-align: center;
+      color: white;
+      margin-bottom: 10px;
+      font-size: 2.5em;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    }
+
+    .subtitle {
+      text-align: center;
+      color: #f0f0f0;
+      margin-bottom: 30px;
+      font-size: 1.1em;
+    }
+
+    .comparison-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 25px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    }
+
+    .card-header {
+      margin-bottom: 20px;
+      padding-bottom: 15px;
+      border-bottom: 3px solid;
+    }
+
+    .jwt-card .card-header {
+      border-color: #3b82f6;
+    }
+
+    .macaroon-card .card-header {
+      border-color: #10b981;
+    }
+
+    .card-title {
+      font-size: 1.8em;
+      font-weight: bold;
+    }
+
+    .jwt-card .card-title {
+      color: #3b82f6;
+    }
+
+    .macaroon-card .card-title {
+      color: #10b981;
+    }
+
+    .section {
+      margin-bottom: 20px;
+    }
+
+    .section-title {
+      font-weight: bold;
+      color: #333;
+      margin-bottom: 10px;
+      font-size: 1.1em;
+    }
+
+    .input-group {
+      margin-bottom: 15px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 5px;
+      color: #555;
+      font-weight: 500;
+    }
+
+    input {
+      width: 100%;
+      padding: 10px;
+      border: 2px solid #e0e0e0;
+      border-radius: 6px;
+      font-size: 14px;
+      transition: border-color 0.3s;
+    }
+
+    input:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 6px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s;
+      margin-bottom: 10px;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-secondary {
+      background: #f3f4f6;
+      color: #374151;
+      border: 2px solid #d1d5db;
+    }
+
+    .btn-secondary:hover {
+      background: #e5e7eb;
+    }
+
+    .btn-success {
+      background: #10b981;
+      color: white;
+    }
+
+    .btn-success:hover {
+      background: #059669;
+    }
+
+    .btn-danger {
+      background: #ef4444;
+      color: white;
+    }
+
+    .btn-danger:hover {
+      background: #dc2626;
+    }
+
+    .token-display {
+      background: #f9fafb;
+      border: 2px dashed #d1d5db;
+      border-radius: 6px;
+      padding: 12px;
+      word-break: break-all;
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      max-height: 150px;
+      overflow-y: auto;
+      color: #374151;
+    }
+
+    .token-display.has-token {
+      border-color: #10b981;
+      background: #f0fdf4;
+    }
+
+    .response-box {
+      background: #1f2937;
+      color: #10b981;
+      border-radius: 6px;
+      padding: 15px;
+      font-family: 'Courier New', monospace;
+      font-size: 13px;
+      max-height: 200px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .response-box.error {
+      color: #ef4444;
+    }
+
+    .info-box {
+      background: #eff6ff;
+      border-left: 4px solid #3b82f6;
+      padding: 15px;
+      margin-top: 20px;
+      border-radius: 6px;
+    }
+
+    .info-box.success {
+      background: #f0fdf4;
+      border-left-color: #10b981;
+    }
+
+    .info-box h3 {
+      color: #1e40af;
+      margin-bottom: 8px;
+      font-size: 1em;
+    }
+
+    .info-box.success h3 {
+      color: #047857;
+    }
+
+    .info-box ul {
+      margin-left: 20px;
+      color: #374151;
+      line-height: 1.6;
+    }
+
+    .full-width-card {
+      grid-column: 1 / -1;
+    }
+
+    .comparison-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+    }
+
+    .comparison-table th {
+      background: #f3f4f6;
+      padding: 12px;
+      text-align: left;
+      font-weight: bold;
+      color: #374151;
+      border-bottom: 2px solid #d1d5db;
+    }
+
+    .comparison-table td {
+      padding: 12px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    .comparison-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .check {
+      color: #10b981;
+      font-weight: bold;
+    }
+
+    .cross {
+      color: #ef4444;
+      font-weight: bold;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: bold;
+      margin-left: 10px;
+    }
+
+    .badge-success {
+      background: #d1fae5;
+      color: #065f46;
+    }
+
+    .badge-warning {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    @media (max-width: 768px) {
+      .comparison-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>JWT vs Macaroons</h1>
+    <p class="subtitle">Demo Interactiva de Autenticación y Autorización</p>
+
+    <!-- Tabla comparativa -->
+    <div class="comparison-grid">
+      <div class="card full-width-card">
+        <h2 style="margin-bottom: 15px; color: #374151;">Comparación de Características</h2>
+        <table class="comparison-table">
+          <thead>
+            <tr>
+              <th>Característica</th>
+              <th>JWT</th>
+              <th>Macaroons</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Autenticación</strong></td>
+              <td><span class="check">✓</span> Sí</td>
+              <td><span class="check">✓</span> Sí</td>
+            </tr>
+            <tr>
+              <td><strong>Delegación de permisos</strong></td>
+              <td><span class="cross">✗</span> No</td>
+              <td><span class="check">✓</span> Sí (Atenuación)</td>
+            </tr>
+            <tr>
+              <td><strong>Revocación</strong></td>
+              <td><span class="cross">✗</span> Difícil</td>
+              <td><span class="check">✓</span> Más fácil (Third-party caveats)</td>
+            </tr>
+            <tr>
+              <td><strong>Restricciones contextuales</strong></td>
+              <td><span class="cross">✗</span> Limitadas</td>
+              <td><span class="check">✓</span> Caveats flexibles</td>
+            </tr>
+            <tr>
+              <td><strong>Complejidad</strong></td>
+              <td>⭐⭐ Baja</td>
+              <td>⭐⭐⭐⭐ Alta</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- JWT Demo -->
+    <div class="comparison-grid">
+      <div class="card jwt-card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">JWT (JSON Web Token)</div>
+            <small style="color: #6b7280;">Usuario: alice / password123</small>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">Paso 1: Login</div>
+          <div class="input-group">
+            <label>Usuario:</label>
+            <input type="text" id="jwt-username" value="alice" />
+          </div>
+          <div class="input-group">
+            <label>Contraseña:</label>
+            <input type="password" id="jwt-password" value="password123" />
+          </div>
+          <button class="btn-primary" onclick="loginJWT()">Obtener JWT</button>
+        </div>
+
+        <div class="section">
+          <div class="section-title">Token JWT:</div>
+          <div class="token-display" id="jwt-token">Haz login para obtener un token...</div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">Paso 2: Acceder a recurso protegido</div>
+          <button class="btn-secondary" onclick="accessJWTResource()">GET /api/self</button>
+        </div>
+
+        <div class="section">
+          <div class="section-title">Respuesta:</div>
+          <div class="response-box" id="jwt-response">Esperando petición...</div>
+        </div>
+
+        <div class="info-box">
+          <h3>Limitaciones de JWT:</h3>
+          <ul>
+            <li>No se puede reducir permisos sin el servidor</li>
+            <li>Todo o nada: tienes rol "admin" completo</li>
+            <li>No puedes delegar permisos limitados</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Macaroons Demo -->
+      <div class="card macaroon-card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Macaroons</div>
+            <small style="color: #6b7280;">Usuario: bob / password123</small>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">Paso 1: Login</div>
+          <div class="input-group">
+            <label>Usuario:</label>
+            <input type="text" id="mac-username" value="bob" />
+          </div>
+          <div class="input-group">
+            <label>Contraseña:</label>
+            <input type="password" id="mac-password" value="password123" />
+          </div>
+          <button class="btn-primary" onclick="loginMacaroon()">Obtener Macaroon</button>
+        </div>
+
+        <div class="section">
+          <div class="section-title">Token Original (Admin completo):</div>
+          <div class="token-display" id="mac-token">Haz login para obtener un token...</div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">Paso 2: Probar acceso completo</div>
+          <button class="btn-success" onclick="getMacaroonAmigos()">GET /api/amigos</button>
+          <button class="btn-success" onclick="postMacaroonAmigos()">POST /api/amigos</button>
+        </div>
+
+        <div class="section">
+          <div class="section-title">Paso 3: Delegar permisos (Solo lectura)</div>
+          <button class="btn-primary" onclick="delegateMacaroon()">Crear token solo-lectura</button>
+        </div>
+
+        <div class="section" id="delegated-section" class="hidden">
+          <div class="section-title">Token Delegado (Solo GET):<span class="badge badge-warning">Solo lectura</span></div>
+          <div class="token-display" id="mac-delegated-token">...</div>
+        </div>
+
+        <div class="section" id="delegated-actions" class="hidden">
+          <div class="section-title">Paso 4: Probar token delegado</div>
+          <button class="btn-success" onclick="getMacaroonAmigosDelegated()">GET con token delegado</button>
+          <button class="btn-danger" onclick="postMacaroonAmigosDelegated()">POST con token delegado (debe fallar)</button>
+        </div>
+
+        <div class="section">
+          <div class="section-title">Respuesta:</div>
+          <div class="response-box" id="mac-response">Esperando petición...</div>
+        </div>
+
+        <div class="info-box success">
+          <h3>Ventajas de Macaroons:</h3>
+          <ul>
+            <li><strong>Atenuación:</strong> Puedes crear tokens con menos permisos</li>
+            <li><strong>Delegación segura:</strong> Comparte acceso limitado</li>
+            <li><strong>Caveats:</strong> Restricciones flexibles (método, tiempo, etc.)</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Inspección de tokens -->
+    <div class="comparison-grid">
+      <div class="card full-width-card">
+        <h2 style="margin-bottom: 15px; color: #374151;">Inspeccionar Macaroon</h2>
+        <p style="color: #6b7280; margin-bottom: 15px;">Pega un macaroon aquí para ver sus caveats (restricciones):</p>
+        <div class="input-group">
+          <textarea id="inspect-token" rows="3" style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 6px; font-family: 'Courier New', monospace; font-size: 12px;"></textarea>
+        </div>
+        <button class="btn-secondary" onclick="inspectMacaroon()">Inspeccionar</button>
+        <div class="section" style="margin-top: 15px;">
+          <div class="section-title">Información del Macaroon:</div>
+          <div class="response-box" id="inspect-response">Pega un token y haz click en inspeccionar...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const JWT_API = 'http://localhost:3001';
+    const MAC_API = 'http://localhost:3002';
+
+    let jwtToken = '';
+    let macToken = '';
+    let macDelegatedToken = '';
+
+    // ==================== JWT ====================
+    async function loginJWT() {
+      const username = document.getElementById('jwt-username').value;
+      const password = document.getElementById('jwt-password').value;
+
+      try {
+        const res = await fetch(`${JWT_API}/auth/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
+
+        const data = await res.json();
+        
+        if (res.ok) {
+          jwtToken = data.token;
+          document.getElementById('jwt-token').textContent = jwtToken;
+          document.getElementById('jwt-token').classList.add('has-token');
+          showResponse('jwt-response', `Login exitoso!\n\nToken obtenido:\n${jwtToken.substring(0, 50)}...`, false);
+        } else {
+          showResponse('jwt-response', `Error: ${data.error}`, true);
+        }
+      } catch (err) {
+        showResponse('jwt-response', `Error de conexión: ${err.message}\n\nAsegúrate de que el servidor JWT esté corriendo en el puerto 3001:\nnpm run start:jwt`, true);
+      }
+    }
+
+    async function accessJWTResource() {
+      if (!jwtToken) {
+        showResponse('jwt-response', 'Primero debes hacer login', true);
+        return;
+      }
+
+      try {
+        const res = await fetch(`${JWT_API}/api/self`, {
+          headers: { 'Authorization': `Bearer ${jwtToken}` }
+        });
+
+        const data = await res.json();
+        showResponse('jwt-response', `Respuesta del servidor:\n\n${JSON.stringify(data, null, 2)}`, false);
+      } catch (err) {
+        showResponse('jwt-response', `Error: ${err.message}`, true);
+      }
+    }
+
+    // ==================== MACAROONS ====================
+    async function loginMacaroon() {
+      const username = document.getElementById('mac-username').value;
+      const password = document.getElementById('mac-password').value;
+
+      try {
+        const res = await fetch(`${MAC_API}/auth/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
+
+        const data = await res.json();
+        
+        if (res.ok) {
+          macToken = data.macaroon;
+          document.getElementById('mac-token').textContent = macToken;
+          document.getElementById('mac-token').classList.add('has-token');
+          showResponse('mac-response', `Login exitoso!\n\nMacaroon obtenido con permisos de ADMIN completo (GET + POST)`, false);
+        } else {
+          showResponse('mac-response', `Error: ${data.error}`, true);
+        }
+      } catch (err) {
+        showResponse('mac-response', `Error de conexión: ${err.message}\n\nAsegúrate de que el servidor Macaroon esté corriendo en el puerto 3002:\nnpm run start:macaroon`, true);
+      }
+    }
+
+    async function getMacaroonAmigos() {
+      if (!macToken) {
+        showResponse('mac-response', 'Primero debes hacer login', true);
+        return;
+      }
+
+      try {
+        const res = await fetch(`${MAC_API}/api/amigos`, {
+          headers: { 'Authorization': `Macaroon ${macToken}` }
+        });
+
+        const data = await res.json();
+        showResponse('mac-response', `GET /api/amigos exitoso con token original!\n\n${JSON.stringify(data, null, 2)}`, false);
+      } catch (err) {
+        showResponse('mac-response', `Error: ${err.message}`, true);
+      }
+    }
+
+    async function postMacaroonAmigos() {
+      if (!macToken) {
+        showResponse('mac-response', 'Primero debes hacer login', true);
+        return;
+      }
+
+      try {
+        const res = await fetch(`${MAC_API}/api/amigos`, {
+          method: 'POST',
+          headers: { 
+            'Authorization': `Macaroon ${macToken}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ nombre: 'Carlos', apellido: 'López' })
+        });
+
+        const data = await res.json();
+        showResponse('mac-response', `POST /api/amigos exitoso con token original!\n\nAgregado: Carlos López\n\n${JSON.stringify(data, null, 2)}`, false);
+      } catch (err) {
+        showResponse('mac-response', `Error: ${err.message}`, true);
+      }
+    }
+
+    async function delegateMacaroon() {
+      if (!macToken) {
+        showResponse('mac-response', 'Primero debes hacer login', true);
+        return;
+      }
+
+      try {
+        const res = await fetch(`${MAC_API}/api/amigos/delegate-readonly`, {
+          method: 'POST',
+          headers: { 'Authorization': `Macaroon ${macToken}` }
+        });
+
+        const data = await res.json();
+        
+        if (res.ok) {
+          macDelegatedToken = data.delegated_macaroon;
+          document.getElementById('mac-delegated-token').textContent = macDelegatedToken;
+          document.getElementById('mac-delegated-token').classList.add('has-token');
+          document.getElementById('delegated-section').classList.remove('hidden');
+          document.getElementById('delegated-actions').classList.remove('hidden');
+          showResponse('mac-response', `Token delegado creado!\n\n${data.note}\n\nEste token tiene el caveat: "method = GET"\nSolo puede hacer peticiones GET, no POST.`, false);
+        } else {
+          showResponse('mac-response', `Error: ${JSON.stringify(data)}`, true);
+        }
+      } catch (err) {
+        showResponse('mac-response', `Error: ${err.message}`, true);
+      }
+    }
+
+    async function getMacaroonAmigosDelegated() {
+      if (!macDelegatedToken) {
+        showResponse('mac-response', 'Primero debes delegar un token', true);
+        return;
+      }
+
+      try {
+        const res = await fetch(`${MAC_API}/api/amigos`, {
+          headers: { 'Authorization': `Macaroon ${macDelegatedToken}` }
+        });
+
+        const data = await res.json();
+        showResponse('mac-response', ` GET exitoso con token DELEGADO!\n\nEl token delegado SÍ permite lectura.\n\n${JSON.stringify(data, null, 2)}`, false);
+      } catch (err) {
+        showResponse('mac-response', ` Error: ${err.message}`, true);
+      }
+    }
+
+    async function postMacaroonAmigosDelegated() {
+      if (!macDelegatedToken) {
+        showResponse('mac-response', ' Primero debes delegar un token', true);
+        return;
+      }
+
+      try {
+        const res = await fetch(`${MAC_API}/api/amigos`, {
+          method: 'POST',
+          headers: { 
+            'Authorization': `Macaroon ${macDelegatedToken}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ nombre: 'Intruso', apellido: 'Malicioso' })
+        });
+
+        const data = await res.json();
+        
+        if (!res.ok) {
+          showResponse('mac-response', ` POST RECHAZADO (como esperado)!\n\n El token delegado tiene el caveat "method = GET"\nNo puede hacer POST.\n\nError: ${data.error}`, false);
+        } else {
+          showResponse('mac-response', ` INESPERADO: ${JSON.stringify(data)}`, true);
+        }
+      } catch (err) {
+        showResponse('mac-response', ` Error: ${err.message}`, true);
+      }
+    }
+
+    async function inspectMacaroon() {
+      const token = document.getElementById('inspect-token').value.trim();
+      
+      if (!token) {
+        showResponse('inspect-response', ' Pega un token macaroon primero', true);
+        return;
+      }
+
+      try {
+        const res = await fetch(`${MAC_API}/debug/parse-macaroon`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token })
+        });
+
+        const data = await res.json();
+        
+        if (res.ok) {
+          let output = ` Información del Macaroon:\n\n`;
+          output += `Identifier: ${data.identifier}\n`;
+          output += `Location: ${data.location}\n\n`;
+          output += ` Caveats (Restricciones):\n`;
+          if (data.caveats && data.caveats.length > 0 && data.caveats[0] !== "Sin caveats de primer partido") {
+            data.caveats.forEach((caveat, i) => {
+              output += `  ${i + 1}. ${caveat}\n`;
+            });
+          } else {
+            output += `  (Sin caveats encontrados)\n`;
+          }
+          
+          // Mostrar el inspect raw para debugging si está disponible
+          if (data.raw_inspect) {
+            output += `\n Inspect completo:\n${data.raw_inspect}`;
+          }
+          
+          showResponse('inspect-response', output, false);
+        } else {
+          showResponse('inspect-response', ` Error: ${data.error}`, true);
+        }
+      } catch (err) {
+        showResponse('inspect-response', ` Error: ${err.message}`, true);
+      }
+    }
+
+    function showResponse(elementId, text, isError) {
+      const el = document.getElementById(elementId);
+      el.textContent = text;
+      if (isError) {
+        el.classList.add('error');
+      } else {
+        el.classList.remove('error');
+      }
+    }
+  </script>
+</body>
+</html>
