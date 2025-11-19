@@ -6,6 +6,12 @@ import path from "path";
 const app = express();
 app.use(express.json());
 
+const validUsers = [
+  { username: "martin", password: "pass123", role: "admin" },
+  { username: "alvaro", password: "pass123", role: "admin" },
+  { username: "gaston", password: "pass123", role: "user" }
+];
+
 // CORS para que el frontend pueda consumir la API
 app.use((req, res, next) => {
   res.header("Access-Control-Allow-Origin", "*");
@@ -31,9 +37,21 @@ interface JwtPayloadCustom {
 app.post("/auth/login", (req: Request, res: Response) => {
   const { username, password } = req.body;
 
-  if (username !== "alice" || password !== "password123") {
+  if (!username || !password) {
+    return res.status(400).json({ error: "Faltan credenciales" });
+  }
+
+  const user = validUsers.find(
+    (u) => u.username === username && u.password === password
+  );
+
+  if (!user) {
     return res.status(401).json({ error: "Credenciales inválidas" });
   }
+
+  // if (username !== "alice" || password !== "password123") {
+  //   return res.status(401).json({ error: "Credenciales inválidas" });
+  // }
 
   const payload: JwtPayloadCustom = {
     sub: "user-123",

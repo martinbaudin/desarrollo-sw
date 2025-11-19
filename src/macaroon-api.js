@@ -6,6 +6,7 @@ const {
   MacaroonsVerifier,
 } = require("macaroons.js");
 const { amigos } = require("./data");
+const { VID_NONCE_KEY_SZ } = require("macaroons.js/lib/MacaroonsConstants");
 
 const app = express();
 
@@ -175,7 +176,6 @@ app.post(
       let m = MacaroonsBuilder.deserialize(token);
 
       // Añadir el nuevo caveat 
-      // No se necesita el "secret" para añadir caveats.
       m = new MacaroonsBuilder(m)
         .add_first_party_caveat("method = GET")
         .getMacaroon();
